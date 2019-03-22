@@ -18,6 +18,7 @@ _usage(){
         echo "      youtube (mp4) for uploading"
         echo "      resourcespace (mp4) for uploading to resourcespace"
         echo "      dvd (iso)"
+        echo "      m4a (m4a)"
         echo "      mp3 (mp3)"
         echo "      podcast (mov)"
         echo "      waveform (png)"
@@ -94,6 +95,9 @@ elif [[ "${OUTPUT_TYPE}" == "dvd" ]] ; then
     EXTENSION="iso"
     RELATIVEPATH="objects/access/dvd"
     DEPENDENCIES+=(dvdauthor mkisofs)
+elif [[ "${OUTPUT_TYPE}" == "m4a" ]] ; then
+    EXTENSION="m4a"
+    RELATIVEPATH="objects/access/m4a"
 elif [[ "${OUTPUT_TYPE}" == "mp3" ]] ; then
     EXTENSION="mp3"
     RELATIVEPATH="objects/access/mp3"
@@ -469,6 +473,8 @@ while [[ "${@}" != "" ]] ; do
             # MIDDLEOPTIONS+=(-bufsize:v 6000k)
             _add_video_filter "yadif"
             _add_video_filter "scale=640:trunc(ow/dar/2)*2:interl=1"
+        elif [[ "${OUTPUT_TYPE}" == "m4a" ]] || [[ "${OUTPUT_TYPE}" == "waveform" ]] ; then
+            _report _dt "No video stream needed for ${OUTPUT_TYPE}."
         elif [[ "${OUTPUT_TYPE}" == "mp3" ]] || [[ "${OUTPUT_TYPE}" == "waveform" ]] ; then
             _report -dt "No video stream needed for ${OUTPUT_TYPE}."
         else
@@ -499,6 +505,14 @@ while [[ "${@}" != "" ]] ; do
             MIDDLEOPTIONS+=(-b:a 448000)
             MIDDLEOPTIONS+=(-ar 48000)
             _get_audio_mapping -v "${SOURCEFILE}"
+        elif [[ "${OUTPUT_TYPE}" == "m4a" ]] ; then
+            MIDDLEOPTIONS+=(-c:a aac)
+            MIDDLEOPTIONS+=(-map 0:a:0)
+            MIDDLEOPTIONS+=(-ac 2)
+            MIDDLEOPTIONS+=(-ar 44100)
+            MIDDLEOPTIONS+=(-b:a 128k)
+            MIDDLEOPTIONS+=(-sample_fmt fltp)
+            _get_audio_mapping -v "${SOURCEFILE}"         
         elif [[ "${OUTPUT_TYPE}" == "mp3" ]] ; then
             MIDDLEOPTIONS+=(-map 0:a:0)
             MIDDLEOPTIONS+=(-ac 2)
