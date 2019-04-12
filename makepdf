@@ -99,7 +99,6 @@ while [ "${*}" != "" ] ; do
     MEDIAID=$(basename "${INPUT}" | cut -d. -f1)
 
     # set up output
-    # how do we make the service create multiple pdfs, e.g. one monochome, one greyscale and one color?
     _log -b
     OUTPUT="${OUTPUTDIR}/${MEDIAID%.*}.pdf"
     [ -s "${OUTPUT}" ] && { _report -wt "WARNING ${OUTPUT} already exists, skipping process" ; shift ; continue ;};
