@@ -120,8 +120,13 @@ while [ "${*}" != "" ] ; do
         tesseract "${TMP_JPG_DIR}/${TIF_BASE_NAME}.jpg" "${TMP_JPG_DIR}/${TIF_BASE_NAME}" -l eng --psm 4 pdf "${SCRIPTDIR}/tesseract.conf"
         tesseract "${TMP_JPG_DIR}/${TIF_BASE_NAME}.jpg" "${TMP_JPG_DIR}/${TIF_BASE_NAME}" -l eng --psm 4     "${SCRIPTDIR}/tesseract.conf"
     done
-    pdfjoin --fitpaper 'false' --rotateoversize 'false' --paper letter $(find "${TMP_JPG_DIR}" -name "*.pdf" | sort | xargs) --outfile "${OUTPUT}"
-    #cat $(find "${TMP_JPG_DIR}" -name "*.txt" | sort | xargs) > "${OUTPUTDIRTEXT}/${MEDIAID}.txt"
+    
+    SCRIPT_TITLE=$(fmpbcore "${MEDIAID}" | xmlstarlet select -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreTitle[@titleType='Series']" -o ": " -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreTitle[@titleType='Episode']")
+    
+    SCRIPT_AUTHOR=$(fmpbcore "${MEDIAID}" | xmlstarlet select -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -m "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreCreator" -v "p:creatorRole" -o ": " -v "p:creator" -o " ; ")
+        
+    pdfjoin --pdftitle "${SCRIPT_TITLE}" --pdfauthor "${SCRIPT_AUTHOR}" --pdfkeywords "CUNY TV Media ID "${MEDIAID}"" --fitpaper 'false' --rotateoversize 'false' --paper letter $(find "${TMP_JPG_DIR}" -name "*.pdf" | sort | xargs) --outfile "${OUTPUT}"
+    #cat $(find "${TMP_JPG_DIR}" -name "*.txt" | sort | xargs) > "${OUTPUTDIRTEXT}/${MEDIAID}.txt" 
 
     find "${TMP_JPG_DIR}" -name "*.txt" | sort | while read page ; do
         PAGENAME="$(basename "${page%.*}")"
