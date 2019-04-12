@@ -18,7 +18,6 @@ _usage(){
         echo "      youtube (mp4) for uploading"
         echo "      resourcespace (mp4) for uploading to resourcespace"
         echo "      dvd (iso)"
-        echo "      m4a (m4a)"
         echo "      mp3 (mp3)"
         echo "      podcast (mov or m4a)"
         echo "      waveform (png)"
@@ -74,7 +73,6 @@ shift $(( ${OPTIND} - 1 ))
 
 DEPENDENCIES=(ffmpeg ffprobe)
 # set derivative extensions and paths
-
 if [[ "${OUTPUT_TYPE}" == "broadcast" ]] ; then
     EXTENSION="mov"
     RELATIVEPATH="objects/service"
@@ -96,23 +94,14 @@ elif [[ "${OUTPUT_TYPE}" == "dvd" ]] ; then
     EXTENSION="iso"
     RELATIVEPATH="objects/access/dvd"
     DEPENDENCIES+=(dvdauthor mkisofs)
-elif [[ "${OUTPUT_TYPE}" == "m4a" ]] ; then
-    EXTENSION="m4a"
-    RELATIVEPATH="objects/access/m4a"
 elif [[ "${OUTPUT_TYPE}" == "mp3" ]] ; then
     EXTENSION="mp3"
     RELATIVEPATH="objects/access/mp3"
 elif [[ "${OUTPUT_TYPE}" == "podcast" ]] ; then
-    if [[ "${VIDEOSTREAMCOUNT}" -gt 0 ]] ; then
-        PREFERRED_SOURCE="service"
-        EXTENSION="mov"
-        RELATIVEPATH="objects/access/podcast"
-        SUFFIX="_podcast"
-    else 
-        EXTENSION="m4a"
-        RELATIVEPATH="objects/access/podcast"
-        SUFFIX="_podcast"
-    fi
+    # extension is set later in the loop because it will be adjusted based on audio-only or audio-video
+    PREFERRED_SOURCE="service"
+    RELATIVEPATH="objects/access/podcast"
+    SUFFIX="_podcast"
 elif [[ "${OUTPUT_TYPE}" == "waveform" ]] ; then
     EXTENSION="png"
     RELATIVEPATH="metadata/depictions"
@@ -157,10 +146,6 @@ while [[ "${@}" != "" ]] ; do
     fi
     _report_to_db
 
-    _set_up_output
-    INPUTOPTIONS+=(-y)
-    INPUTOPTIONS+=(-nostdin)
-
     # get information on the input
     _get_height "${SOURCEFILE}"
     _get_width "${SOURCEFILE}"
@@ -170,6 +155,18 @@ while [[ "${@}" != "" ]] ; do
     _get_audiostreamcount "${SOURCEFILE}"
     _get_dar "${SOURCEFILE}"
     _get_sar "${SOURCEFILE}"
+
+    if [[ "${OUTPUT_TYPE}" == "podcast" ]] ; then
+        if [[ "${VIDEOSTREAMCOUNT}" -gt 0 ]] ; then
+            EXTENSION="mov"
+        else 
+            EXTENSION="m4a"
+        fi
+    fi
+
+    _set_up_output
+    INPUTOPTIONS+=(-y)
+    INPUTOPTIONS+=(-nostdin)
 
     # set in and out times if used; ignore out time if a slate is being created
     if [[ -f "${INGESTLOG}" && "${ISOBJECT}" = "Y" ]] ; then
@@ -511,15 +508,7 @@ while [[ "${@}" != "" ]] ; do
         elif [[ "${OUTPUT_TYPE}" == "dvd" ]] ; then
             MIDDLEOPTIONS+=(-b:a 448000)
             MIDDLEOPTIONS+=(-ar 48000)
-            _get_audio_mapping -v "${SOURCEFILE}"
-        elif [[ "${OUTPUT_TYPE}" == "m4a" ]] ; then
-            MIDDLEOPTIONS+=(-c:a aac)
-            MIDDLEOPTIONS+=(-map 0:a:0)
-            MIDDLEOPTIONS+=(-ac 2)
-            MIDDLEOPTIONS+=(-ar 48000)
-            MIDDLEOPTIONS+=(-b:a 128k)
-            MIDDLEOPTIONS+=(-sample_fmt fltp)
-            _get_audio_mapping -v "${SOURCEFILE}"         
+            _get_audio_mapping -v "${SOURCEFILE}"       
         elif [[ "${OUTPUT_TYPE}" == "mp3" ]] ; then
             MIDDLEOPTIONS+=(-map 0:a:0)
             MIDDLEOPTIONS+=(-ac 2)
