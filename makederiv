@@ -510,10 +510,14 @@ while [[ "${@}" != "" ]] ; do
             MIDDLEOPTIONS+=(-ar 48000)
             _get_audio_mapping -v "${SOURCEFILE}"       
         elif [[ "${OUTPUT_TYPE}" == "mp3" ]] ; then
+            TAPE_TITLE=$(fmpbcore "${MEDIAID}" | xmlstarlet 'select' -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreTitle[@titleType='Episode']" -o " (" -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreTitle[@titleType='Series']" -o ")" )
+            TAPE_ARTIST=$(fmpbcore "${MEDIAID}" | xmlstarlet 'select' -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -m "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreCreator" -v "p:creatorRole" -o ": " -v "p:creator" -o " ; ")
             MIDDLEOPTIONS+=(-map 0:a:0)
             MIDDLEOPTIONS+=(-ac 2)
             MIDDLEOPTIONS+=(-r:a 44100)
             MIDDLEOPTIONS+=(-sample_fmt s16p)
+            MIDDLEOPTIONS+=(-metadata title="${TAPE_TITLE}")
+            MIDDLEOPTIONS+=(-metadata artist="${TAPE_ARTIST}")
             _get_audio_mapping -v "${SOURCEFILE}"
         elif [[ "${OUTPUT_TYPE}" == "podcast" ]] ; then
             if [[ "${VIDEOSTREAMCOUNT}" -gt 0 ]] ; then
