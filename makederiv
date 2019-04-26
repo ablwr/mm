@@ -507,14 +507,17 @@ while [[ "${@}" != "" ]] ; do
             MIDDLEOPTIONS+=(-ar 48000)
             _get_audio_mapping -v "${SOURCEFILE}"       
         elif [[ "${OUTPUT_TYPE}" == "mp3" ]] ; then
-            TAPE_TITLE=$(fmpbcore "${MEDIAID}" | xmlstarlet 'select' -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreTitle[@titleType='Episode']" -o " (" -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreTitle[@titleType='Series']" -o ")" )
-            TAPE_ARTIST=$(fmpbcore "${MEDIAID}" | xmlstarlet 'select' -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -m "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreCreator" -v "p:creatorRole" -o ": " -v "p:creator" -o " ; ")
+            TAPE_TITLE="$(fmpbcore "${MEDIAID}" | xmlstarlet 'select' -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreTitle[@titleType='Episode']" -o ", first aired " -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreAssetDate[@dateType='Broadcast' or @dateType='broadcast'][1]" -o ")" )"
+            TAPE_ARTIST="$(fmpbcore "${MEDIAID}" | xmlstarlet 'select' -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -m "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreCreator" -v "p:creatorRole" -o ": " -v "p:creator" -o " ; ")"
+            TAPE_YEAR="$(fmpbcore "${MEDIAID}" | xmlstarlet 'select' -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreAssetDate[@dateType='Broadcast' or @dateType='broadcast'][1]")"
             MIDDLEOPTIONS+=(-map 0:a:0)
             MIDDLEOPTIONS+=(-ac 2)
             MIDDLEOPTIONS+=(-r:a 44100)
             MIDDLEOPTIONS+=(-sample_fmt s16p)
+            MIDDLEOPTIONS+=(-write_xing 0)
             MIDDLEOPTIONS+=(-metadata title="${TAPE_TITLE}")
             MIDDLEOPTIONS+=(-metadata artist="${TAPE_ARTIST}")
+            MIDDLEOPTIONS+=(-metadata date="${TAPE_YEAR}")
             _get_audio_mapping -v "${SOURCEFILE}"
         elif [[ "${OUTPUT_TYPE}" == "podcast" ]] ; then
             if [[ "${VIDEOSTREAMCOUNT}" -gt 0 ]] ; then
@@ -522,14 +525,20 @@ while [[ "${@}" != "" ]] ; do
             MIDDLEOPTIONS+=(-b:a 96k)
             _get_audio_mapping -v "${SOURCEFILE}"
             else 
+            TAPE_TITLE="$(fmpbcore "${MEDIAID}" | xmlstarlet 'select' -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreTitle[@titleType='Episode']" -o " (" -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreTitle[@titleType='Series']" -o ", first aired " -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreAssetDate[@dateType='Broadcast' or @dateType='broadcast'][1]" -o ")" )"
+            TAPE_ARTIST="$(fmpbcore "${MEDIAID}" | xmlstarlet 'select' -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -m "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreCreator" -v "p:creatorRole" -o ": " -v "p:creator" -o " ; ")"
+            TAPE_YEAR="$(fmpbcore "${MEDIAID}" | xmlstarlet 'select' -N "p=http://www.pbcore.org/PBCore/PBCoreNamespace.html" -t -v "/p:pbcoreCollection/p:pbcoreDescriptionDocument/p:pbcoreAssetDate[@dateType='Broadcast' or @dateType='broadcast'][1]")"
             MIDDLEOPTIONS+=(-c:a aac)
             MIDDLEOPTIONS+=(-map 0:a:0)
             MIDDLEOPTIONS+=(-ac 2)
             MIDDLEOPTIONS+=(-ar 48000)
             MIDDLEOPTIONS+=(-b:a 128k)
             MIDDLEOPTIONS+=(-sample_fmt fltp)
-            _get_audio_mapping -v "${SOURCEFILE}" 
-            fi    
+            MIDDLEOPTIONS+=(-metadata title="${TAPE_TITLE}")
+            MIDDLEOPTIONS+=(-metadata artist="${TAPE_ARTIST}")
+            MIDDLEOPTIONS+=(-metadata date="${TAPE_YEAR}")
+            _get_audio_mapping -v "${SOURCEFILE}"
+            fi
         elif [[ "${OUTPUT_TYPE}" == "waveform" ]] ; then
             MIDDLEOPTIONS+=(-vn)
             MIDDLEOPTIONS+=(-frames:v 1)
