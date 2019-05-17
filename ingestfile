@@ -12,6 +12,7 @@ if [ -f "${TEMP_INGEST}" ] ; then
     INGESTLOG="${TEMP_INGEST}"
     OP="$(_readingestlog "OPERATOR")"
     INPUT="$(_readingestlog "INPUT")"
+    DIGITIZATION="$(_readingestlog "DIGITIZATION")"
     AUDIODECISION="$(_readingestlog "AUDIODECISION")"
     CROPDECISION="$(_readingestlog "CROPDECISION")"
     SLATE=$(_readingestlog "SLATE")
@@ -205,6 +206,7 @@ _makeaccesscopies(){
         "${SCRIPTDIR}/makederiv" -T dvd "${OUTDIR_INGESTFILE}/${MEDIAID}"
     else
         "${SCRIPTDIR}/makederiv" -T showwaves "${MAKEDERIVOPTS[@]}" "${OUTDIR_INGESTFILE}/${MEDIAID}"
+        "${SCRIPTDIR}/makederiv" -T audiographs "${MAKEDERIVOPTS[@]}" "${OUTDIR_INGESTFILE}/${MEDIAID}"
     fi
 }
 
@@ -481,6 +483,7 @@ if [ "${TERMINAL_MODE}" != "Y" ] ; then
     rm "${PASHUA_CONFIGFILE}"
     echo "  OPERATOR = ${OP}"
     echo "  INPUT = ${INPUT}"
+    echo "  DIGITIZATION = ${DIGITIZATION}"
     echo "  MEDIAID = ${MEDIAID}"
     echo "  AUDIODECISION = ${AUDIODECISION}"
     echo "  CROPDECISION = ${CROPDECISION}"
@@ -515,11 +518,18 @@ fi
     fi
     _setup_package
     if [[ "${MODE}" == "audio" ]] ; then
-        _ask_digitization_logs
-        _ask_photos "${MEDIAID}"
-        if [[ -f ${FILES} ]] ; then
-            _parse_spreadsheet
-            _get_xmp_info
+        _report -q "Is the file the result of digitization?"
+        select DIGITIZATION in "Yes" "No"
+        do
+            break
+        done
+        if [[ "${DIGITIZATION}" == "Yes" ]] ; then
+            _ask_digitization_logs
+            _ask_photos "${MEDIAID}"
+            if [[ -f ${FILES} ]] ; then
+                _parse_spreadsheet
+                _get_xmp_info
+            fi
         fi
     fi
     if [[ -z "${AUDIODECISION}" ]] ; then
